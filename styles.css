@@ -50,6 +50,10 @@ main { display: block; }
 .skip:focus { left: 8px; }
 
 /* ---------- gold text ---------- */
+/* Cormorant a une hauteur d'x plus petite que Host Grotesk : on l'agrandit pour aligner visuellement */
+.h2 em, .page-hero__title em, .reveal-xl em, .reveal-l em, .slow em,
+.footer__big em, .quote-sec__text em, .marquee__track span:nth-of-type(even) { font-size: 1.14em; line-height: .9; letter-spacing: -.02em; }
+.hero__title em { font-size: 1.14em; letter-spacing: -.02em; }
 .h2 em, .page-hero__title em, .hero__title em, .reveal-xl em, .reveal-l em, .slow em,
 .footer__big em, .quote-sec__text em,
 em .w, em .rw {
@@ -200,7 +204,6 @@ em .w, em .rw {
   linear-gradient(90deg, rgba(10,9,8,.45) 0%, rgba(10,9,8,0) 60%); }
 .hero__content { position: relative; width: 100%; padding: 0 var(--gutter) clamp(28px, 5vh, 56px); }
 .hero__title { margin: 0 0 clamp(28px, 5vh, 56px); font-weight: 400; font-size: clamp(48px, 9.6vw, 160px); line-height: .95; letter-spacing: -.045em; }
-.hero__title em { font-size: 1.06em; }
 .hero__bottom { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
 .hero__intro { max-width: 410px; }
 .hero__intro p { margin: 0 0 24px; color: rgba(246,242,234,.86); }
@@ -461,10 +464,26 @@ em .w, em .rw {
 .form__status { margin: 0; min-height: 1.5em; font-size: 14px; color: var(--gold-light); }
 
 /* ---------- footer ---------- */
-.footer { position: relative; isolation: isolate; padding: clamp(80px, 14vh, 160px) var(--gutter) 24px; border-top: 1px solid var(--line); overflow: hidden; }
-.footer__cta { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; flex-wrap: wrap; margin-bottom: clamp(60px, 10vh, 110px); }
-.footer__big { margin: 0; max-width: 900px; font-size: clamp(36px, 5.6vw, 84px); line-height: 1.02; letter-spacing: -.035em; }
-.page-contact .footer__cta { display: none; }
+/* le contenu défile au-dessus d'un pied de page fixe, qui se dévoile en dessous */
+main, .cta-band { position: relative; z-index: 1; background: var(--black); }
+.cta-band { box-shadow: 0 40px 80px -20px rgba(0,0,0,.9); }
+html.footer-reveal body { padding-bottom: var(--footer-h, 0px); }
+html.footer-reveal .footer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 0; }
+.footer { position: relative; isolation: isolate; padding: clamp(60px, 11vh, 120px) var(--gutter) 24px; overflow: hidden;
+  background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(201,164,92,.10) 0%, rgba(201,164,92,0) 70%), var(--ink); }
+.footer__inner { will-change: transform, opacity; }
+
+/* bandeau CTA avec photo */
+.cta-band { min-height: clamp(460px, 82svh, 820px); display: flex; align-items: flex-end; overflow: hidden; border-top: 1px solid var(--line); }
+.cta-band__bg { position: absolute; inset: -12% 0; }
+.cta-band__bg img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 30%; filter: saturate(.85) contrast(1.05); }
+.cta-band__veil { position: absolute; inset: 0; background:
+  linear-gradient(180deg, rgba(10,9,8,.85) 0%, rgba(10,9,8,.35) 35%, rgba(10,9,8,.55) 65%, rgba(10,9,8,.96) 100%),
+  linear-gradient(90deg, rgba(10,9,8,.75) 0%, rgba(10,9,8,.15) 70%); }
+.cta-band__inner { position: relative; width: 100%; padding: clamp(80px, 14vh, 160px) var(--gutter) clamp(60px, 10vh, 110px); }
+.cta-band__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 20px 36px; margin-top: clamp(32px, 5vh, 56px); }
+.footer__big { margin: 0; max-width: 1000px; font-size: clamp(42px, 6.8vw, 112px); line-height: 1; letter-spacing: -.04em; }
+.page-contact .cta-band { display: none; }
 .footer__cols { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 32px; }
 .footer__cols p, .footer__cols li { font-size: 15px; color: var(--muted); }
 .footer__cols p { margin: 0; }
@@ -556,6 +575,7 @@ em .w, em .rw {
   .hero__bottom { flex-direction: column; align-items: flex-start; }
   .hero__tags { display: none; }
   .hero__bg img { object-position: 42% 70%; }
+  .cta-band__bg img { object-position: 40% 22%; }
   .intro__top { flex-direction: column; gap: 8px; }
   .works { grid-template-columns: 1fr; }
   .stats { gap: 12px; }

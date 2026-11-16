@@ -300,15 +300,44 @@
   const giant = $('[data-chars]');
   const giantChars = giant ? splitChars(giant) : [];
 
-  /* Signature du pied de page : s'écrit et s'illumine en or à l'arrivée */
+  /* ---------------------------------------------------------
+     Pied de page « dévoilé » : fixe en arrière-plan, le contenu glisse au-dessus
+     --------------------------------------------------------- */
+  const footer = $('[data-footer]');
+  const footerInner = $('[data-footer-inner]');
+  const layer = $('.cta-band') || $('main');
   const signature = $('[data-signature]');
-  if (signature) {
-    if ('IntersectionObserver' in window) {
-      const io = new IntersectionObserver(entries => {
-        entries.forEach(en => { if (en.isIntersecting) { signature.classList.add('is-lit'); io.disconnect(); } });
-      }, { threshold: 0.45 });
-      io.observe(signature);
-    } else signature.classList.add('is-lit');
+  let revealOn = false;
+  function measureFooter() {
+    if (!footer) return;
+    const h = footer.offsetHeight;
+    // seulement si le pied de page tient dans l'écran (sinon défilement classique)
+    revealOn = h <= innerHeight - 20;
+    root.classList.toggle('footer-reveal', revealOn);
+    root.style.setProperty('--footer-h', h + 'px');
+  }
+  function onFooterScroll() {
+    if (!footer || !layer) return;
+    const fr = footer.getBoundingClientRect();
+    const covered = Math.max(0, Math.min(fr.height, layer.getBoundingClientRect().bottom - fr.top)); // px encore masqués
+    const k = fr.height ? 1 - covered / fr.height : 1; // 0 = caché, 1 = entièrement dévoilé
+    if (revealOn && footerInner && !reduced) {
+      footerInner.style.transform = `translate3d(0, ${(-(1 - k) * 22).toFixed(2)}%, 0)`;
+      footerInner.style.opacity = (0.25 + 0.75 * k).toFixed(3);
+    }
+    if (signature && !signature.classList.contains('is-lit')) {
+      const sr = signature.getBoundingClientRect();
+      const visibleTop = Math.max(sr.top, layer.getBoundingClientRect().bottom);
+      if (sr.bottom - visibleTop > sr.height * 0.55 && sr.top < innerHeight) signature.classList.add('is-lit');
+    }
+  }
+  if (footer) {
+    measureFooter();
+    addEventListener('resize', () => { measureFooter(); onFooterScroll(); }, { passive: true });
+    addEventListener('load', () => { measureFooter(); onFooterScroll(); });
+    addEventListener('scroll', onFooterScroll, { passive: true });
+    if ('ResizeObserver' in window) new ResizeObserver(measureFooter).observe(footer);
+    onFooterScroll();
   }
 
   /* ---------------------------------------------------------
@@ -411,6 +440,11 @@
         tracks.forEach(t => t.getAnimations().forEach(an => (an.playbackRate = r)));
       });
     }
+
+    // Photo du bandeau CTA : parallaxe
+    const ctaImg = $('[data-cta-img]');
+    if (ctaImg) gsap.fromTo(ctaImg, { yPercent: -8 }, { yPercent: 8, ease: 'none',
+      scrollTrigger: { trigger: '.cta-band', start: 'top bottom', end: 'bottom top', scrub: true } });
 
     // Grand « Premium » du pied de page
     if (giantChars.length) {
