@@ -1,0 +1,33 @@
+<!--{"title": "Contact — Alexandre Premium", "description": "Contactez Jorge Alexandre au 06 11 14 34 04 ou via le formulaire pour réserver une prestation beauté à domicile ou un forfait mariage.", "nav": "contact", "bodyClass": "page-contact"}-->
+
+<section class="contact">
+  <div class="contact__left">
+    <p class="label label--dot" data-fade>Prendre contact</p>
+    <h1 class="page-hero__title" data-split>Vous avez des questions&nbsp;?<br><em>Nous sommes là.</em></h1>
+    <div class="contact__direct" data-fade>
+      <p>Jorge Alexandre</p>
+      <a href="tel:+33611143404" class="contact__phone magnetic">06 11 14 34 04</a>
+    </div>
+    <ul class="contact__socials" data-fade>
+      <li><a href="https://www.instagram.com/alexandre.premium/" target="_blank" rel="noopener">Instagram ↗</a></li>
+      <li><a href="https://www.facebook.com/Alexandre-Premium-106299601455337" target="_blank" rel="noopener">Facebook ↗</a></li>
+      <li><a href="https://www.youtube.com/channel/UCLbWMzTFlFlf2b73EqHX_wQ" target="_blank" rel="noopener">YouTube ↗</a></li>
+      <li><a href="https://www.linkedin.com/in/jorge-alexandre-b20b44204/" target="_blank" rel="noopener">LinkedIn ↗</a></li>
+      <li><a href="https://twitter.com/AlexandrePremi3" target="_blank" rel="noopener">X ↗</a></li>
+    </ul>
+  </div>
+  <form class="form" id="contactForm" novalidate data-fade>
+    <label><span>Prénom</span><input name="prenom" autocomplete="given-name" placeholder="Votre prénom" required></label>
+    <label><span>Nom</span><input name="nom" autocomplete="family-name" placeholder="Votre nom" required></label>
+    <label><span>Adresse e-mail</span><input type="email" name="email" autocomplete="email" placeholder="vous@exemple.fr" required></label>
+    <label><span>Téléphone</span><input type="tel" name="tel" autocomplete="tel" placeholder="06 00 00 00 00"></label>
+    <label><span>Prestation souhaitée</span>
+      <select name="prestation">
+        <option>Mariage</option><option>Coiffure</option><option>Maquillage</option><option>Manucure</option><option>Massage</option><option>Relooking / esthétique</option><option>Barbier</option><option>Coupe énergétique</option><option>Coaching sportif</option><option>Photographie</option><option>Autre</option>
+      </select>
+    </label>
+    <label><span>Message</span><textarea name="message" rows="4" placeholder="Votre demande, la date, le lieu…" required></textarea></label>
+    <button class="btn btn--gold btn--full magnetic" type="submit">Envoyer <span aria-hidden="true">→</span></button>
+    <p class="form__status" id="formStatus" role="status"></p>
+  </form>
+</section>
