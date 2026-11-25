@@ -498,6 +498,65 @@
   }
 
   /* ---------------------------------------------------------
+     Équipe sur téléphone : profils qui défilent seuls de droite à gauche
+     (balayage au doigt possible ; reprise automatique après 2,5 s)
+     --------------------------------------------------------- */
+  function autoCarousel(track) {
+    const mq = matchMedia('(max-width: 640px)');
+    let clones = [], raf = 0, pos = 0, setW = 0, last = 0, holdUntil = 0, onScreen = true, active = false;
+    const SPEED = 0.035; // px par ms (~35 px/s)
+    const measure = () => {
+      const first = clones[0];
+      setW = first ? first.offsetLeft - track.firstElementChild.offsetLeft : 0;
+    };
+    const frame = now => {
+      const dt = Math.min(now - last, 100); last = now;
+      if (!reduced && onScreen && now > holdUntil && setW) {
+        pos += SPEED * dt;
+        if (pos >= setW) pos -= setW;
+        track.scrollLeft = pos;
+      } else {
+        pos = track.scrollLeft;
+        if (setW && pos >= setW) { pos -= setW; track.scrollLeft = pos; }
+        if (pos <= 0 && setW) { pos += setW; track.scrollLeft = pos; }
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    const hold = () => { holdUntil = performance.now() + 2500; };
+    const enable = () => {
+      if (active) return; active = true;
+      track.classList.add('is-carousel');
+      [...track.children].forEach(el => {
+        const c = el.cloneNode(true);
+        c.removeAttribute('id');
+        c.setAttribute('aria-hidden', 'true');
+        c.tabIndex = -1;
+        c.querySelectorAll('[style]').forEach(n => n.removeAttribute('style'));
+        c.removeAttribute('style');
+        c.querySelectorAll('[data-clip]').forEach(n => n.removeAttribute('data-clip'));
+        c.addEventListener('click', e => { e.preventDefault(); el.click(); });
+        clones.push(c);
+      });
+      track.append(...clones);
+      requestAnimationFrame(() => { measure(); pos = track.scrollLeft; last = performance.now(); raf = requestAnimationFrame(frame); });
+    };
+    const disable = () => {
+      if (!active) return; active = false;
+      cancelAnimationFrame(raf);
+      clones.forEach(c => c.remove()); clones = [];
+      track.classList.remove('is-carousel');
+      track.scrollLeft = 0;
+    };
+    ['pointerdown', 'touchstart', 'wheel'].forEach(t => track.addEventListener(t, hold, { passive: true }));
+    track.addEventListener('scroll', () => { if (performance.now() < holdUntil) hold(); }, { passive: true });
+    addEventListener('resize', () => active && measure(), { passive: true });
+    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; }).observe(track);
+    const sync = () => (mq.matches ? enable() : disable());
+    mq.addEventListener ? mq.addEventListener('change', sync) : mq.addListener(sync);
+    sync();
+  }
+
+  /* ---------------------------------------------------------
      Vidéo YouTube (fenêtre)
      --------------------------------------------------------- */
   $$('[data-video]').forEach(btn => btn.addEventListener('click', () => {
@@ -684,4 +743,5 @@
   }
 
   $$('[data-year]').forEach(y => (y.textContent = new Date().getFullYear()));
+  $$('.notes__grid, .team__grid').forEach(autoCarousel);
 })();

@@ -28,13 +28,36 @@ NAV = [
 # liens affichés dans la barre desktop (le menu plein écran les contient tous)
 NAV_INLINE = {"accueil", "histoire", "equipe", "services", "realisations", "tarifs"}
 
+WHATSAPP = "https://wa.me/33611143404"
+
+# icônes 24x24 (trait ou plein, couleur = currentColor)
+ICONS = {
+    "instagram": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>',
+    "facebook": '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.6 21.5v-8h2.7l.4-3.2h-3.1V8.3c0-.9.3-1.5 1.6-1.5h1.6V4a22 22 0 0 0-2.4-.1c-2.4 0-4 1.4-4 4.1v2.3H7.8v3.2h2.6v8z"/></svg>',
+    "youtube": '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 8.2a3 3 0 0 0-2.1-2.1C18 5.6 12 5.6 12 5.6s-6 0-7.9.5A3 3 0 0 0 2 8.2 31 31 0 0 0 1.6 12c0 1.3.1 2.6.4 3.8a3 3 0 0 0 2.1 2.1c1.9.5 7.9.5 7.9.5s6 0 7.9-.5a3 3 0 0 0 2.1-2.1c.3-1.2.4-2.5.4-3.8s-.1-2.6-.4-3.8zM10 15.1V8.9l5.2 3.1z"/></svg>',
+    "linkedin": '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM3.2 9h3.6v11.5H3.2zM9.1 9h3.4v1.6h.1c.5-.9 1.7-1.9 3.5-1.9 3.7 0 4.4 2.4 4.4 5.6v6.2h-3.6V15c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9v5.6H9.1z"/></svg>',
+    "x": '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.8 3h3.1l-6.8 7.7 8 10.3h-6.3l-4.9-6.4L5.3 21H2.2l7.3-8.3L1.9 3h6.4l4.4 5.8zm-1.1 16.2h1.7L7.4 4.7H5.6z"/></svg>',
+    "whatsapp": '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2a9.7 9.7 0 0 0-8.3 14.8L2.3 21.8l4.9-1.3A9.7 9.7 0 1 0 12 2.2zm0 17.7c-1.5 0-3-.4-4.2-1.2l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1 1 12 19.9zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8.9c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.7-1.8c-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 2s.9 2.3 1 2.5c.1.2 1.7 2.6 4.2 3.7 1.6.7 2.2.7 3 .6.5-.1 1.4-.6 1.6-1.2.2-.6.2-1.1.1-1.2l-.4-.2z"/></svg>',
+    "arrow-up": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+}
+
 SOCIALS = [
     ("Instagram", "IG", "https://www.instagram.com/alexandre.premium/"),
     ("Facebook", "FB", "https://www.facebook.com/Alexandre-Premium-106299601455337"),
     ("YouTube", "YT", "https://www.youtube.com/channel/UCLbWMzTFlFlf2b73EqHX_wQ"),
     ("LinkedIn", "IN", "https://www.linkedin.com/in/jorge-alexandre-b20b44204/"),
     ("X / Twitter", "X", "https://twitter.com/AlexandrePremi3"),
+    ("WhatsApp", "WA", WHATSAPP),
 ]
+ICON_OF = {"IG": "instagram", "FB": "facebook", "YT": "youtube", "IN": "linkedin", "X": "x", "WA": "whatsapp"}
+
+def social_icons(cls="social-icons", indent="        "):
+    items = "\n".join(
+        f'{indent}  <li><a href="{url}" target="_blank" rel="noopener" aria-label="{name}" title="{name}">{ICONS[ICON_OF[code]]}</a></li>'
+        for name, code, url in SOCIALS
+    )
+    return f'{indent}<ul class="{cls}" aria-label="Réseaux sociaux">\n{items}\n{indent}</ul>'
+
 
 HEAD = """<!doctype html>
 <html lang="fr">
@@ -77,9 +100,7 @@ def header(active):
         f'      <li><a href="{href}"{cur(key, active)}><small>0{i}</small><span>{label}</span></a></li>'
         for i, (key, href, label) in enumerate(NAV, 1)
     )
-    socials = "\n".join(
-        f'        <li><a href="{url}" target="_blank" rel="noopener">{name}</a></li>' for name, _, url in SOCIALS
-    )
+    socials = social_icons("social-icons menu__socials", "      ")
     return f"""
 <header class="header" data-header>
   <a href="index.html" class="brand" aria-label="Alexandre Premium — accueil">
@@ -103,9 +124,7 @@ def header(active):
     <div class="menu__aside">
       <p class="eyebrow">Jorge Alexandre</p>
       <a class="menu__phone" href="tel:+33611143404">06 11 14 34 04</a>
-      <ul class="menu__socials">
 {socials}
-      </ul>
       <p class="menu__motto">« Je m'occupe de tout… et de Vous ! »</p>
     </div>
   </div>
@@ -113,9 +132,7 @@ def header(active):
 """
 
 def footer():
-    socials = "\n".join(
-        f'        <li><a href="{url}" target="_blank" rel="noopener">{name}</a></li>' for name, _, url in SOCIALS
-    )
+    socials = social_icons("social-icons footer__socials", "      ")
     menu = "\n".join(f'        <li><a href="{href}">{label}</a></li>' for _, href, label in NAV)
     return f"""
 <section class="cta-band" aria-label="Prendre rendez-vous">
@@ -140,9 +157,7 @@ def footer():
     </div>
     <div>
       <p class="eyebrow">Suivre</p>
-      <ul>
 {socials}
-      </ul>
     </div>
     <div>
       <p class="eyebrow">Menu</p>
@@ -158,10 +173,14 @@ def footer():
   <div class="footer__legal">
     <span>© <span data-year>2026</span> Alexandre Premium</span>
     <span>« Je m'occupe de tout… et de Vous ! »</span>
-    <a href="#top" data-top>Haut de page ↑</a>
+    <a href="#top" data-top class="to-top magnetic" aria-label="Revenir en haut de la page" title="Haut de page">{ICONS["arrow-up"]}</a>
   </div>
   </div>
 </footer>
+
+<a class="wa-float magnetic" href="{WHATSAPP}" target="_blank" rel="noopener" aria-label="Nous écrire sur WhatsApp" data-cursor="WhatsApp">
+  <span class="wa-float__shine" aria-hidden="true"></span>{ICONS["whatsapp"]}
+</a>
 
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
@@ -178,7 +197,7 @@ def build():
         if not m:
             raise SystemExit(f"Métadonnées manquantes dans {src.name}")
         meta = json.loads(m.group(1))
-        body = raw[m.end():]
+        body = raw[m.end():].replace("<!-- @socials -->", social_icons("social-icons", "    "))
         out = HEAD.format(
             title=meta["title"],
             description=meta["description"],
