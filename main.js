@@ -104,6 +104,15 @@
       ctx.fill();
       ctx.restore();
     };
+    const sprites = {};
+    const sprite = c => {
+      if (sprites[c]) return sprites[c];
+      const s = document.createElement('canvas'); s.width = s.height = 64;
+      const g = s.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, `rgba(${c},1)`); gr.addColorStop(0.35, `rgba(${c},.45)`); gr.addColorStop(1, `rgba(${c},0)`);
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+      return (sprites[c] = s);
+    };
     const tick = () => {
       ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = 'lighter';
@@ -116,12 +125,10 @@
         const k = p.life / p.ttl;
         const alpha = (k < 0.15 ? k / 0.15 : 1 - (k - 0.15) / 0.85) * 0.95;
         if (p.star) { drawStar(p, alpha); continue; }
-        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
-        g.addColorStop(0, `rgba(${p.c},${alpha})`);
-        g.addColorStop(0.35, `rgba(${p.c},${alpha * 0.45})`);
-        g.addColorStop(1, `rgba(${p.c},0)`);
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2); ctx.fill();
+        const d = p.r * 8;
+        ctx.globalAlpha = alpha;
+        ctx.drawImage(sprite(p.c), p.x - d / 2, p.y - d / 2, d, d);
+        ctx.globalAlpha = 1;
       }
       raf = parts.length ? requestAnimationFrame(tick) : 0;
     };
@@ -307,36 +314,43 @@
   const footerInner = $('[data-footer-inner]');
   const layer = $('.cta-band') || $('main');
   const signature = $('[data-signature]');
-  let revealOn = false;
+  let revealOn = false, footH = 0, layerBottom = 0, sigTop = 0, sigH = 0, footVisible = null;
   function measureFooter() {
     if (!footer) return;
-    const h = footer.offsetHeight;
+    footH = footer.offsetHeight;
     // seulement si le pied de page tient dans l'écran (sinon défilement classique)
-    revealOn = h <= innerHeight - 20;
+    revealOn = footH <= innerHeight - 20;
     root.classList.toggle('footer-reveal', revealOn);
-    root.style.setProperty('--footer-h', h + 'px');
+    root.style.setProperty('--footer-h', footH + 'px');
+    if (layer) layerBottom = layer.getBoundingClientRect().bottom + scrollY;
+    if (signature) { sigTop = signature.offsetTop; sigH = signature.offsetHeight; }
   }
   function onFooterScroll() {
     if (!footer || !layer) return;
-    const fr = footer.getBoundingClientRect();
-    const covered = Math.max(0, Math.min(fr.height, layer.getBoundingClientRect().bottom - fr.top)); // px encore masqués
-    const k = fr.height ? 1 - covered / fr.height : 1; // 0 = caché, 1 = entièrement dévoilé
+    const y = scrollY;
+    const fTop = revealOn ? innerHeight - footH : layerBottom - y;   // haut du footer dans l'écran
+    const lb = layerBottom - y;                                      // bas de la page qui le recouvre
+    const covered = Math.max(0, Math.min(footH, lb - fTop));
+    const k = footH ? 1 - covered / footH : 1;                       // 0 = caché, 1 = entièrement dévoilé
+    const vis = revealOn ? k > 0.001 : fTop < innerHeight;
+    if (vis !== footVisible) { footVisible = vis; footer.classList.toggle('is-visible', vis); }
+    if (!vis) return;
     if (revealOn && footerInner && !reduced) {
       footerInner.style.transform = `translate3d(0, ${(-(1 - k) * 22).toFixed(2)}%, 0)`;
       footerInner.style.opacity = (0.25 + 0.75 * k).toFixed(3);
     }
     if (signature && !signature.classList.contains('is-lit')) {
-      const sr = signature.getBoundingClientRect();
-      const visibleTop = Math.max(sr.top, layer.getBoundingClientRect().bottom);
-      if (sr.bottom - visibleTop > sr.height * 0.55 && sr.top < innerHeight) signature.classList.add('is-lit');
+      const sTop = fTop + sigTop, sBot = sTop + sigH;
+      if (sBot - Math.max(sTop, lb) > sigH * 0.55 && sTop < innerHeight) signature.classList.add('is-lit');
     }
   }
   if (footer) {
+    const remeasure = () => { measureFooter(); onFooterScroll(); };
     measureFooter();
-    addEventListener('resize', () => { measureFooter(); onFooterScroll(); }, { passive: true });
-    addEventListener('load', () => { measureFooter(); onFooterScroll(); });
+    addEventListener('resize', remeasure, { passive: true });
+    addEventListener('load', remeasure);
     addEventListener('scroll', onFooterScroll, { passive: true });
-    if ('ResizeObserver' in window) new ResizeObserver(measureFooter).observe(footer);
+    if ('ResizeObserver' in window) { const ro = new ResizeObserver(remeasure); ro.observe(footer); ro.observe(document.body); }
     onFooterScroll();
   }
 
@@ -347,8 +361,8 @@
     // titres « hero » : mots qui sortent du flou
     heroSplits.forEach(words => {
       gsap.fromTo(words,
-        { opacity: 0, yPercent: 40, filter: 'blur(14px)' },
-        { opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: 1.4, ease: 'expo.out', stagger: 0.08, delay: 0.05 });
+        { opacity: 0, yPercent: 40, filter: 'blur(10px)' },
+        { opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: 1.4, ease: 'expo.out', stagger: 0.08, delay: 0.05, clearProps: 'filter,transform' });
     });
     const bg = $('[data-hero-bg]');
     if (bg) gsap.fromTo(bg, { scale: 1.2 }, { scale: 1, duration: 2.4, ease: 'expo.out' });
@@ -367,23 +381,23 @@
     // Textes révélés mot à mot au scroll (flou → net)
     reveals.forEach(({ el, words }) => {
       gsap.fromTo(words,
-        { opacity: 0.12, filter: 'blur(6px)' },
-        { opacity: 1, filter: 'blur(0px)', ease: 'none', stagger: 0.08,
+        { opacity: 0.14 },
+        { opacity: 1, ease: 'none', stagger: 0.08,
           scrollTrigger: { trigger: el, start: 'top 85%', end: 'bottom 50%', scrub: 0.6 } });
     });
 
     // Titres secondaires : apparition au passage
     scrollSplits.forEach(({ el, words }) => {
       gsap.fromTo(words,
-        { opacity: 0, yPercent: 40, filter: 'blur(12px)' },
-        { opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: 1.3, ease: 'expo.out', stagger: 0.08,
+        { opacity: 0, yPercent: 40, filter: 'blur(8px)' },
+        { opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: 1.3, ease: 'expo.out', stagger: 0.08, clearProps: 'filter,transform',
           scrollTrigger: { trigger: el, start: 'top 88%', once: true } });
     });
 
     // Fondu vers le haut
     ScrollTrigger.batch('[data-fade]', {
       start: 'top 90%', once: true,
-      onEnter: els => gsap.fromTo(els, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1.2, ease: 'expo.out', stagger: 0.1, overwrite: true })
+      onEnter: els => gsap.fromTo(els, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1.2, ease: 'expo.out', stagger: 0.1, overwrite: true, clearProps: 'transform' })
     });
     gsap.set('[data-fade]', { opacity: 0 });
 
@@ -407,21 +421,33 @@
       const media = $('[data-scaler-media]', sec);
       const a = $('.scaler__word--a', sec);
       const b = $('.scaler__word--b', sec);
+      sec.classList.add('scaler--clip');
+      const insetFrom = () => {
+        const small = innerWidth <= 640;
+        const w = innerWidth * (small ? 0.8 : 0.4), h = innerHeight * (small ? 0.3 : 0.45);
+        const v = (innerHeight - h) / 2, x = (innerWidth - w) / 2;
+        return `inset(${v}px ${x}px ${v}px ${x}px)`;
+      };
       const tl = gsap.timeline({ scrollTrigger: { trigger: sec, start: 'top top', end: 'bottom bottom', scrub: 0.8, invalidateOnRefresh: true } });
-      tl.to(media, { width: () => innerWidth, height: () => innerHeight, ease: 'power1.inOut', duration: 1 }, 0)
+      tl.fromTo(media, { clipPath: insetFrom }, { clipPath: 'inset(0px 0px 0px 0px)', ease: 'power1.inOut', duration: 1 }, 0)
         .fromTo(a, { xPercent: -70, scale: 0.45, opacity: 0.25 }, { xPercent: 0, scale: 1, opacity: 1, ease: 'power2.out', duration: 0.8 }, 0)
         .fromTo(b, { xPercent: 70, scale: 0.45, opacity: 0.25 }, { xPercent: 0, scale: 1, opacity: 1, ease: 'power2.out', duration: 0.8 }, 0)
         .to({}, { duration: 0.25 });
     });
 
     // Services : cartes empilées
+    // La carte recouverte recule doucement puis s'efface (transform + opacité : GPU uniquement, pas de noir)
     const cards = $$('.stack__card');
+    const stickyTop = i => (parseFloat(getComputedStyle(cards[i]).top) || 0);
     cards.forEach((card, i) => {
       if (i === cards.length - 1) return;
-      gsap.to(card, {
-        scale: 0.9, filter: 'brightness(0.45)', ease: 'none',
-        scrollTrigger: { trigger: cards[i + 1], start: 'top bottom', end: 'top 20%', scrub: true }
-      });
+      const next = cards[i + 1];
+      gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: { trigger: next, start: 'top bottom', end: () => `top ${stickyTop(i + 1)}px`, scrub: true, invalidateOnRefresh: true }
+      })
+        .fromTo(card, { scale: 1, yPercent: 0 }, { scale: 0.9, yPercent: -3, force3D: true, duration: 1 }, 0)
+        .fromTo(card, { opacity: 1 }, { opacity: 0, duration: 0.55 }, 0.45);
     });
 
     // Compteurs
@@ -435,9 +461,13 @@
     // Marquee : accélère avec la vitesse de scroll
     const tracks = $$('.marquee__track, .quotes-marquee__track');
     if (lenis && tracks.length) {
+      const anims = tracks.flatMap(t => t.getAnimations());
+      let rate = 1;
       lenis.on('scroll', e => {
         const r = 1 + Math.min(Math.abs(e.velocity) / 12, 3);
-        tracks.forEach(t => t.getAnimations().forEach(an => (an.playbackRate = r)));
+        if (Math.abs(r - rate) < 0.05) return;
+        rate = r;
+        anims.forEach(an => (an.playbackRate = r));
       });
     }
 

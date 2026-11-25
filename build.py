@@ -7,6 +7,7 @@ puis le contenu du <main>. L'en-tête, le menu et le pied de page sont communs.
 
 Usage : python3 build.py
 """
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -188,6 +189,10 @@ def build():
         out += header(meta.get("nav"))
         out += '\n<main id="contenu">\n' + body.strip() + "\n</main>\n"
         out += footer()
+        # version dans l'URL : le navigateur recharge le CSS/JS dès qu'ils changent
+        for asset in ("styles.css", "main.js"):
+            ver = hashlib.md5((ROOT / asset).read_bytes()).hexdigest()[:8]
+            out = out.replace(f'"{asset}"', f'"{asset}?v={ver}"')
         (ROOT / src.name).write_text(out, encoding="utf-8")
         print("✓", src.name)
 

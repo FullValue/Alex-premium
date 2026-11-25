@@ -213,7 +213,7 @@ em .w, em .rw {
 @keyframes bob { 50% { transform: translateY(8px); } }
 
 /* split words */
-.w { display: inline-block; will-change: transform, filter, opacity; }
+.w { display: inline-block; }
 .js [data-split] { visibility: hidden; }
 .js [data-split].is-split { visibility: visible; }
 
@@ -263,7 +263,8 @@ em .w, em .rw {
 /* ---------- scaler (sticky video) ---------- */
 .scaler { position: relative; height: 320vh; }
 .scaler__sticky { position: sticky; top: 0; height: 100svh; overflow: hidden; display: grid; place-items: center; }
-.scaler__media { position: relative; width: 40vw; height: 45svh; overflow: hidden; background: var(--ink); will-change: width, height; z-index: 1; }
+.scaler__media { position: relative; width: 40vw; height: 45svh; overflow: hidden; background: var(--ink); z-index: 1; }
+.scaler--clip .scaler__media { width: 100vw; height: 100svh; will-change: clip-path; }
 .scaler__play, .scaler__media iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .scaler__play img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(.35) brightness(.7); transition: filter .8s; }
 .scaler__play:hover img { filter: grayscale(0) brightness(.8); }
@@ -373,6 +374,8 @@ em .w, em .rw {
   border: 1px solid var(--line);
   transform-origin: 50% 0;
   will-change: transform;
+  backface-visibility: hidden;
+  overflow: hidden;
 }
 .stack__media { overflow: hidden; min-height: 300px; }
 .stack__media img { width: 100%; height: 100%; object-fit: cover; }
@@ -495,8 +498,8 @@ html.footer-reveal .footer { position: fixed; left: 0; right: 0; bottom: 0; z-in
 .signature__text {
   position: relative; display: inline-block; margin: 0;
   font-family: "Mrs Saint Delafield", "Brush Script MT", cursive; font-weight: 400;
-  font-size: clamp(64px, 13vw, 230px); line-height: 1.25; letter-spacing: 0;
-  padding: 0 .35em; white-space: nowrap;
+  font-size: clamp(42px, 13vw, 230px); line-height: 1.25; letter-spacing: 0;
+  padding: 0 clamp(.12em, 2vw, .35em); white-space: nowrap; max-width: 100%;
 }
 .signature__ink, .signature__glow { display: block; }
 .signature__ink {
@@ -522,18 +525,21 @@ html.footer-reveal .footer { position: fixed; left: 0; right: 0; bottom: 0; z-in
 .signature.is-lit .signature__glow {
   clip-path: inset(-20% -5% -20% 0); opacity: 1;
   filter: drop-shadow(0 0 6px rgba(244,227,178,.55)) drop-shadow(0 0 24px rgba(201,164,92,.35));
-  animation: sigSheen 6s 2.4s ease-in-out infinite, sigBreath 4.5s 3s ease-in-out infinite;
+  animation: sigSheen 7s 2.4s ease-in-out infinite;
 }
 .signature.is-lit .signature__flourish { opacity: .9; }
 .signature.is-lit .signature__flourish path { stroke-dashoffset: 0; }
 @keyframes sigSheen { 0% { background-position: 100% 0; } 50% { background-position: 0% 0; } 100% { background-position: 100% 0; } }
-@keyframes sigBreath { 50% { filter: drop-shadow(0 0 10px rgba(255,244,207,.7)) drop-shadow(0 0 40px rgba(201,164,92,.45)); } }
+@keyframes sigHalo { 0%, 100% { opacity: .65; transform: translate(-50%, -50%) scale(.96); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } }
 .signature::after {
   content: ""; position: absolute; left: 50%; top: 50%; width: 60%; height: 50%; transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse, rgba(201,164,92,.18) 0%, rgba(201,164,92,0) 70%);
-  opacity: 0; transition: opacity 2s 1s; pointer-events: none; z-index: -1;
+  background: radial-gradient(ellipse, rgba(236,213,156,.22) 0%, rgba(201,164,92,.08) 40%, rgba(201,164,92,0) 70%);
+  opacity: 0; transition: opacity 2s 1s; pointer-events: none; z-index: -1; will-change: opacity, transform;
 }
-.signature.is-lit::after { opacity: 1; }
+.signature.is-lit::after { opacity: 1; animation: sigHalo 4.5s 3s ease-in-out infinite; }
+/* footer masqué sous la page : on ne peint rien et on met les boucles en pause */
+html.footer-reveal .footer:not(.is-visible) { visibility: hidden; }
+.footer:not(.is-visible) .signature__glow, .footer:not(.is-visible) .signature::after { animation-play-state: paused; }
 .footer__legal { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; font-size: 12px; color: rgba(246,242,234,.42); border-top: 1px solid var(--line); padding-top: 18px; }
 .footer__legal a:hover { color: var(--gold-light); }
 
@@ -582,6 +588,7 @@ html.footer-reveal .footer { position: fixed; left: 0; right: 0; bottom: 0; z-in
   .stats span { font-size: 11px; }
   .scaler { height: 240vh; }
   .scaler__media { width: 80vw; height: 30svh; }
+  .scaler--clip .scaler__media { width: 100vw; height: 100svh; }
   .scaler__word { font-size: clamp(56px, 20vw, 110px); }
   .scaler__word--a { top: 12svh; }
   .scaler__word--b { bottom: 12svh; }
@@ -590,7 +597,10 @@ html.footer-reveal .footer { position: fixed; left: 0; right: 0; bottom: 0; z-in
   .masonry figure { margin-bottom: 8px; }
   .team__grid { gap: 32px 10px; }
   .member__meta { flex-direction: column; gap: 2px; }
-  .member__role { text-align: left; font-size: 10px; }
+  .member__role { text-align: left; font-size: 11px; }
+  .socials { gap: 6px; }
+  .socials a, .contact__socials a { display: inline-block; padding: 10px 8px; margin: -10px -8px; }
+  .socials li, .contact__socials li { padding: 0 6px; }
   .facts { grid-template-columns: 1fr; }
   .offer__cols { grid-template-columns: 1fr; }
   .prices span { font-size: 15px; }
